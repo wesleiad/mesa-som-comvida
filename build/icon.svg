@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1c1c"/><stop offset="1" stop-color="#0a0a0a"/></linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5b74"/><stop offset="1" stop-color="#e01f3d"/></linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="#fc2747" stroke-opacity=".35" stroke-width="8"/>
+  <g stroke="#3a3a3a" stroke-width="22" stroke-linecap="round">
+    <line x1="146" y1="110" x2="146" y2="402"/>
+    <line x1="256" y1="110" x2="256" y2="402"/>
+    <line x1="366" y1="110" x2="366" y2="402"/>
+  </g>
+  <g stroke="#fc2747" stroke-width="22" stroke-linecap="round" opacity=".55">
+    <line x1="146" y1="300" x2="146" y2="402"/>
+    <line x1="256" y1="190" x2="256" y2="402"/>
+    <line x1="366" y1="250" x2="366" y2="402"/>
+  </g>
+  <rect x="96" y="262" width="100" height="56" rx="16" fill="url(#cap)"/>
+  <rect x="206" y="152" width="100" height="56" rx="16" fill="url(#cap)"/>
+  <rect x="316" y="212" width="100" height="56" rx="16" fill="url(#cap)"/>
+  <g fill="#fff" opacity=".9">
+    <rect x="116" y="286" width="60" height="8" rx="4"/>
+    <rect x="226" y="176" width="60" height="8" rx="4"/>
+    <rect x="336" y="236" width="60" height="8" rx="4"/>
+  </g>
+</svg>

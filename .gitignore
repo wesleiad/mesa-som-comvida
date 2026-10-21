@@ -1,0 +1,9 @@
+node_modules/
+out/
+dist/
+.env
+*.log
+.DS_Store
+*.tsbuildinfo
+electron.vite.config.*.mjs
+scripts/shots/

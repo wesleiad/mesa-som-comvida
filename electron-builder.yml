@@ -1,0 +1,37 @@
+appId: com.comvida.mesadesom
+productName: Mesa de Som - Com.Vida
+directories:
+  buildResources: build
+files:
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!scripts/*"
+  - "!build/*"
+  - "!shared/*"
+  - "!electron.vite.config.{js,ts,mjs,cjs}"
+  - "!{README.md,CLAUDE.md}"
+asarUnpack:
+  - resources/**
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  artifactName: ${productName}-${version}-setup.${ext}
+  oneClick: false
+  perMachine: true
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Mesa de Som - Com.Vida
+  runAfterFinish: true
+  include: build/installer.nsh
+# Atualização automática: o GitHub Actions publica cada versão como Release
+# em github.com/wesleiad/mesa-som-comvida e o app baixa de lá sozinho.
+publish:
+  provider: github
+  owner: wesleiad
+  repo: mesa-som-comvida
+  releaseType: release

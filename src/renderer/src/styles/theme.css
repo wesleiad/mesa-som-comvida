@@ -1,0 +1,91 @@
+@import "tailwindcss";
+/* Fonte embutida no app (funciona sem internet na igreja). */
+@import "@fontsource/fredoka/latin-400.css";
+@import "@fontsource/fredoka/latin-500.css";
+@import "@fontsource/fredoka/latin-600.css";
+@import "@fontsource/fredoka/latin-700.css";
+
+/* Mesma identidade do app da Escala do Louvor: vermelho-coral sobre fundo
+   quase preto e a fonte arredondada Fredoka. */
+@theme {
+  --font-sans: "Fredoka", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-200: #ffb3bf;
+  --color-brand-300: #ff8a9b;
+  --color-brand-400: #fd5b74;
+  --color-brand-500: #fc2747;
+  --color-brand-600: #e01f3d;
+  --color-brand-700: #b81730;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background-color: #0a0a0a;
+  color: #f5f5f5;
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+@layer components {
+  .btn-brand {
+    @apply rounded-xl bg-brand-500 font-semibold text-white transition hover:bg-brand-400 active:scale-[.97] active:bg-brand-600;
+  }
+  .btn-ghost {
+    @apply flex items-center justify-center rounded-xl bg-neutral-800 text-neutral-100 ring-1 ring-white/10 transition hover:bg-neutral-700 active:scale-[.97] disabled:opacity-30;
+  }
+  .btn-danger {
+    @apply rounded-xl bg-red-600 font-semibold text-white transition hover:bg-red-500 active:scale-[.97];
+  }
+  .input {
+    @apply h-12 w-full rounded-xl bg-neutral-800 px-3 text-base text-white ring-1 ring-white/10 outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-brand-500;
+  }
+  .field-label {
+    @apply mb-1 block text-sm text-neutral-400;
+  }
+  .section-title {
+    @apply text-sm font-semibold tracking-wider text-neutral-400 uppercase;
+  }
+  .range {
+    @apply h-10 w-full cursor-pointer accent-[#fc2747];
+  }
+}
+
+/* Área acima do volume máximo do voluntário. */
+.hatch {
+  background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.06) 0 6px, transparent 6px 12px);
+}
+
+.shake {
+  animation: shake 0.35s;
+}
+@keyframes shake {
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-4px); }
+}
+
+@keyframes pulse-red {
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.25); }
+}
+.pulse-red {
+  animation: pulse-red 1.2s infinite;
+}
