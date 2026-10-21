@@ -45,3 +45,14 @@ npm run build:win    # instalador local em dist/ (perMachine: instalar com eleva
 ```
 
 Fora do instalador o app usa `userData` com sufixo `-dev` pra não sobrescrever a configuração real.
+
+## Onde paramos (21/10/2026, versão 1.0.6)
+
+- Publicado: instalador Windows + .apk Android em
+  https://github.com/wesleiad/mesa-som-comvida/releases/latest (gerados pelo Actions a cada push no `main`).
+- Kit pra pendrive em `C:\Users\User\Desktop\Instalar Mesa de Som` (exe + apk + LEIA-ME); refazer quando sair versão
+  nova que precise ir pra outro aparelho sem internet.
+- Ajustes → "Levar os ajustes pra outro aparelho": salvar/abrir arquivo ou copiar de outro computador pela rede.
+- **Falta testar de verdade**: com a Soundcraft ligada (Procurar mesa, faders, grupos, cenas, 48V) e num
+  celular/tablet Android físico (instalação do .apk, conexão direta com a mesa, sincronização com o PC).
+- Fora do escopo por enquanto: app iOS (precisa de Mac + conta Apple), EQ/compressor (abre a tela original da mesa).
