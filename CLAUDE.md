@@ -26,6 +26,12 @@ o `rxjs` em devDependencies é só pros tipos).
 - Atualização automática (`src/main/updater.ts`, electron-updater): baixa da Release do GitHub e
   instala ao fechar; `/api/update` + botão "Atualizar agora" (só aceito vindo do próprio PC).
   O GitHub Actions publica `1.0.<run_number>` a cada push no `main` — não mexer na versão à mão.
+- App Android (Capacitor 8, pasta `android/`, `capacitor.config.ts`, webDir `out/renderer`): mesma tela; `isNativeApp`
+  (src/renderer/src/lib/platform.ts). Ajustes no localStorage + sincronização opcional com o PC (CORS em /api).
+  "Procurar mesa" no aparelho via WebSocket (`lib/discoverWs.ts`). Assinatura PKCS12 nos segredos
+  ANDROID_KEYSTORE_BASE64/PASSWORD (backup em Documentos\Mesa-Som-ComVida-chave-android) — nunca trocar a chave.
+  Sem Java/SDK local: o .apk só é gerado no GitHub Actions. Ícones: `scripts/generate-android-icons.mjs`.
+- Grupos (flags) de canais/retornos (`GroupBar`): mutam no PA, dentro do retorno aberto ou retornos inteiros.
 - EQ/compressor/FX não estão no app: botão em Ajustes abre a tela original da mesa.
 
 ## Comandos
