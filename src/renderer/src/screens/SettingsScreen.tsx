@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
-import { DEFAULT_MIXER_IP } from "@shared/constants";
-import { STRIP_COLORS, STRIP_ICONS } from "@shared/defaults";
+import { DEFAULT_MIXER_IP, SERVER_PORT } from "@shared/constants";
+import { normalizeConfig, STRIP_COLORS, STRIP_ICONS } from "@shared/defaults";
 import type { FlagGroup, ServerInfo, StripKey } from "@shared/types";
 import { confirmBox } from "../components/Dialog";
 import { DiscoverDialog } from "../components/DiscoverDialog";
@@ -355,6 +355,86 @@ function SimpleLayoutCard() {
   );
 }
 
+/** Levar os ajustes (nomes, grupos, cenas, senha...) pra outro computador ou aparelho. */
+function ShareCard() {
+  const [addr, setAddr] = useState("");
+  const [msg, setMsg] = useState("");
+
+  async function apply(raw: unknown, origem: string) {
+    const cfg = normalizeConfig(raw);
+    const ok = await confirmBox(
+      "Usar os ajustes copiados?",
+      `Os nomes, grupos, cenas, retornos e a senha deste aparelho vão ser trocados pelos ${origem}.`,
+      "Usar estes ajustes",
+    );
+    if (!ok) return;
+    updateConfig(cfg);
+    setMsg("✅ Ajustes copiados.");
+  }
+
+  function exportFile() {
+    const blob = new Blob([JSON.stringify(useConfig.getState().config, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "mesa-de-som-ajustes.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
+  async function importFile(file: File | undefined) {
+    if (!file) return;
+    try {
+      await apply(JSON.parse(await file.text()), "do arquivo");
+    } catch {
+      setMsg("Esse arquivo não é um arquivo de ajustes da Mesa de Som.");
+    }
+  }
+
+  async function copyFromPc() {
+    const a = addr.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (!a) return;
+    setMsg("Procurando o outro computador…");
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(`http://${a.includes(":") ? a : `${a}:${SERVER_PORT}`}/api/config`, { signal: ctrl.signal, cache: "no-store" });
+      clearTimeout(t);
+      if (!res.ok) throw new Error();
+      setMsg("");
+      await apply(await res.json(), "do outro computador");
+    } catch {
+      setMsg("Não achei o outro computador nesse endereço. Ele está ligado, com o programa aberto, na mesma rede?");
+    }
+  }
+
+  return (
+    <Card title="Levar os ajustes pra outro aparelho">
+      <p className="mb-3 text-sm text-neutral-400">Nomes dos canais, grupos, cenas, retornos e senha. Use pra montar um computador novo igual a este.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button className="btn-ghost h-11 text-sm" onClick={exportFile}>
+          ⬇️ Salvar arquivo de ajustes
+        </button>
+        <label className="btn-ghost h-11 cursor-pointer text-sm">
+          ⬆️ Abrir arquivo de ajustes
+          <input type="file" accept=".json,application/json" className="hidden" onChange={(e) => importFile(e.target.files?.[0])} />
+        </label>
+      </div>
+      {!isNativeApp && (
+        <div className="mt-3">
+          <span className="field-label">Ou copiar direto de outro computador da igreja (endereço que aparece em Ajustes nele):</span>
+          <div className="flex gap-2">
+            <input className="input flex-1 font-mono" inputMode="decimal" placeholder="192.168.1.13" value={addr} onChange={(e) => setAddr(e.target.value)} />
+            <button className="btn-brand h-12 px-4" onClick={copyFromPc}>
+              Copiar
+            </button>
+          </div>
+        </div>
+      )}
+      {msg && <p className="mt-2 text-sm text-neutral-300">{msg}</p>}
+    </Card>
+  );
+}
+
 function SecurityCard() {
   const cfg = useConfig((s) => s.config);
   const [pin, setPin] = useState("");
@@ -422,6 +502,7 @@ export function SettingsScreen() {
           <ConnectionCard />
           {isNativeApp ? <PcSyncCard /> : <DevicesCard />}
           <SecurityCard />
+          <ShareCard />
         </div>
         <div className="space-y-4">
           <GroupsCard />

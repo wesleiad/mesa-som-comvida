@@ -178,6 +178,22 @@ await win.waitForTimeout(500);
 check("QR code pro tablet", (await win.locator('img[alt="QR code do endereço"]').count()) === 1);
 await win.screenshot({ path: path.join(SHOTS, "07-desktop-ajustes.png") });
 
+// levar ajustes pra outro computador: copiar pela rede e abrir arquivo
+await win.locator('input[placeholder="192.168.1.13"]').fill("127.0.0.1:8078");
+await win.locator("button", { hasText: "Copiar" }).click();
+await win.waitForSelector('[role="dialog"] >> text=Usar os ajustes copiados?', { timeout: 6000 }).catch(() => {});
+check("copiar ajustes de outro computador", (await win.locator('[role="dialog"]', { hasText: "do outro computador" }).count()) === 1);
+await win.locator('[role="dialog"] button', { hasText: "Usar estes ajustes" }).click();
+const cfgNow = await (await fetch("http://127.0.0.1:8078/api/config")).json();
+const exported = { ...cfgNow, strips: { ...cfgNow.strips, "i.2": { ...cfgNow.strips["i.2"], label: "Back Importado" } } };
+const cfgFile = path.join(SHOTS, "ajustes-teste.json");
+fs.writeFileSync(cfgFile, JSON.stringify(exported));
+await win.locator('input[type="file"]').setInputFiles(cfgFile);
+await win.locator('[role="dialog"] button', { hasText: "Usar estes ajustes" }).click();
+await win.waitForTimeout(300);
+const cfgAfter = await (await fetch("http://127.0.0.1:8078/api/config")).json();
+check("abrir arquivo de ajustes", cfgAfter.strips["i.2"]?.label === "Back Importado");
+
 // procurar mesa: acha a mesa falsa, conecta nela e volta pro simulador
 await win.locator("button", { hasText: "Procurar mesa na rede" }).click();
 await win.waitForSelector(`text=${FAKE_IP}`, { timeout: 30000 });
