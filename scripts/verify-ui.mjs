@@ -120,6 +120,22 @@ await win.screenshot({ path: path.join(SHOTS, "04-desktop-canal.png") });
 await win.keyboard.press("Escape");
 check("nome personalizado aparece", (await win.locator("text=Pastor Fulano").count()) > 0);
 
+// grupos (flags): marca 2 microfones como "Mic com fio" e muta o grupo no PA
+for (const name of ["Pastor Fulano", "Voz Ministro"]) {
+  await win.locator("button", { hasText: name }).first().click();
+  await win.locator('[role="dialog"] button', { hasText: "Mic com fio" }).click();
+  await win.keyboard.press("Escape");
+}
+const micGroup = win.locator("button[aria-pressed]", { hasText: "Mic com fio" }).first();
+check("grupo mostra 2 canais", (await micGroup.textContent()).includes("2"), await micGroup.textContent());
+await micGroup.click();
+await win.waitForTimeout(200);
+check("grupo muta os canais no PA", (await micGroup.getAttribute("aria-pressed")) === "true");
+await win.screenshot({ path: path.join(SHOTS, "04b-desktop-grupo-mutado.png") });
+await micGroup.click();
+await win.waitForTimeout(200);
+check("grupo desmuta de novo", (await micGroup.getAttribute("aria-pressed")) === "false");
+
 // retornos: liberar AUX 1 pros voluntários
 await win.locator("nav >> text=Retornos").first().click();
 await win.locator("button", { hasText: "AUX 1" }).first().click();
@@ -128,6 +144,22 @@ await win.locator("button", { hasText: "Mostrar pros voluntários" }).click();
 await win.waitForTimeout(200);
 check("retorno liberado e renomeado", (await win.locator("text=Retorno Ministro").count()) > 0);
 await win.screenshot({ path: path.join(SHOTS, "05-desktop-retorno.png") });
+
+// grupo de canais dentro do retorno + grupo de retornos
+const micInAux = win.locator("button[aria-pressed]", { hasText: "Mic com fio" }).first();
+await micInAux.click();
+await win.waitForTimeout(200);
+check("grupo muta dentro do retorno", (await micInAux.getAttribute("aria-pressed")) === "true");
+await micInAux.click();
+await win.locator("button", { hasText: "Retornos do palco" }).first().click();
+await win.locator('button[aria-label="Voltar pra lista de retornos"]').click();
+const retGroup = win.locator("button[aria-pressed]", { hasText: "Retornos do palco" }).first();
+await retGroup.click();
+await win.waitForTimeout(200);
+check("grupo de retornos muta o retorno", (await retGroup.getAttribute("aria-pressed")) === "true");
+await win.screenshot({ path: path.join(SHOTS, "05b-desktop-grupo-retornos.png") });
+await retGroup.click();
+await win.locator("button", { hasText: "Retorno Ministro" }).first().click();
 
 // cenas: liberar uma cena
 await win.locator("nav >> text=Cenas").first().click();
@@ -167,6 +199,7 @@ await phone.waitForSelector("text=Volume geral");
 await phone.waitForTimeout(800);
 check("celular recebe nome salvo no PC", (await phone.locator("text=Pastor Fulano").count()) > 0);
 check("celular não muta tudo ao abrir", (await phone.locator("text=TUDO MUTADO").count()) === 0);
+check("celular (básico) mostra os grupos", (await phone.locator("button[aria-pressed]", { hasText: "Mic com fio" }).count()) === 1);
 check("celular começa no visual básico", (await phone.locator('button[aria-label="Visual básico"]').getAttribute("aria-pressed")) === "true");
 const overflow = await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 check("celular sem rolagem lateral", !overflow);

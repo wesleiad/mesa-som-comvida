@@ -1,12 +1,13 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { DEFAULT_MIXER_IP } from "@shared/constants";
-import type { ServerInfo, StripKey } from "@shared/types";
+import { STRIP_COLORS, STRIP_ICONS } from "@shared/defaults";
+import type { FlagGroup, ServerInfo, StripKey } from "@shared/types";
 import { confirmBox } from "../components/Dialog";
 import { DiscoverDialog } from "../components/DiscoverDialog";
 import { useUpdateStatus } from "../components/UpdateBanner";
 import { useStripLook } from "../components/Strip";
-import { allStripKeys, useMixer } from "../lib/mixer";
+import { allStripKeys, parseKey, useMixer, useObs } from "../lib/mixer";
 import { updateConfig, useConfig } from "../state/config";
 import { useUi } from "../state/ui";
 import { useSimpleKeys } from "./MixScreen";
@@ -147,10 +148,142 @@ function AddRow({ k }: { k: StripKey }) {
   );
 }
 
+function MemberChip({ k, on, color, onClick }: { k: StripKey; on: boolean; color: string; onClick: () => void }) {
+  const look = useStripLook(k);
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={on}
+      className={`h-8 rounded-lg px-2 text-xs font-semibold ${on ? "text-black" : "bg-[#242424] text-neutral-400 ring-1 ring-white/10"}`}
+      style={on ? { background: color } : undefined}
+    >
+      {look.icon} {look.name}
+    </button>
+  );
+}
+
+function AuxChip({ aux, on, color, onClick }: { aux: number; on: boolean; color: string; onClick: () => void }) {
+  const ui = useMixer((s) => s.ui);
+  const label = useConfig((s) => s.config.returns.find((r) => r.aux === aux)?.label);
+  const ch = useMemo(() => (ui ? ui.master.aux(aux) : null), [ui, aux]);
+  const mixerName = useObs(ch?.name$, `AUX ${aux}`);
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={on}
+      className={`h-8 rounded-lg px-2 text-xs font-semibold ${on ? "text-black" : "bg-[#242424] text-neutral-400 ring-1 ring-white/10"}`}
+      style={on ? { background: color } : undefined}
+    >
+      🎧 {label || mixerName}
+    </button>
+  );
+}
+
+function GroupRow({ g }: { g: FlagGroup }) {
+  const caps = useMixer((s) => s.caps);
+  const strips = useConfig((s) => s.config.strips);
+  const auxGroups = useConfig((s) => s.config.auxGroups);
+  const [open, setOpen] = useState(false);
+  const set = (patch: Partial<FlagGroup>) => updateConfig((c) => ({ groups: c.groups.map((x) => (x.id === g.id ? { ...x, ...patch } : x)) }));
+  const keys = allStripKeys(caps).flatMap((x) => x.keys);
+  const count = g.kind === "channels" ? keys.filter((k) => strips[k]?.groups?.includes(g.id)).length : Object.values(auxGroups).filter((ids) => ids.includes(g.id)).length;
+
+  async function remove() {
+    if (!(await confirmBox(`Apagar o grupo "${g.name}"?`, "Os canais e retornos continuam iguais, só perdem essa marcação.", "Apagar", true))) return;
+    updateConfig((c) => ({
+      groups: c.groups.filter((x) => x.id !== g.id),
+      strips: Object.fromEntries(Object.entries(c.strips).map(([k, v]) => [k, { ...v, groups: v?.groups?.filter((id) => id !== g.id) }])),
+      auxGroups: Object.fromEntries(Object.entries(c.auxGroups).map(([k, ids]) => [k, ids.filter((id) => id !== g.id)])),
+    }));
+  }
+  function toggleStrip(k: StripKey) {
+    updateConfig((c) => {
+      const cur = c.strips[k]?.groups ?? [];
+      return { strips: { ...c.strips, [k]: { ...c.strips[k], groups: cur.includes(g.id) ? cur.filter((x) => x !== g.id) : [...cur, g.id] } } };
+    });
+  }
+  function toggleAux(a: number) {
+    updateConfig((c) => {
+      const cur = c.auxGroups[String(a)] ?? [];
+      return { auxGroups: { ...c.auxGroups, [String(a)]: cur.includes(g.id) ? cur.filter((x) => x !== g.id) : [...cur, g.id] } };
+    });
+  }
+
+  return (
+    <div className="rounded-xl bg-neutral-900 p-2" style={{ boxShadow: `inset 3px 0 0 ${g.color}` }}>
+      <div className="flex items-center gap-1.5">
+        <select className="h-9 rounded-lg bg-neutral-800 px-1 text-lg" value={g.icon} onChange={(e) => set({ icon: e.target.value })} aria-label="Ícone do grupo">
+          {[...new Set([g.icon, ...STRIP_ICONS])].map((ic) => (
+            <option key={ic} value={ic}>
+              {ic}
+            </option>
+          ))}
+        </select>
+        <input className="input h-9 min-w-0 flex-1 text-sm" defaultValue={g.name} onBlur={(e) => set({ name: e.target.value.trim() || g.name })} aria-label="Nome do grupo" />
+        <button className="btn-ghost h-9 shrink-0 px-2 text-xs" onClick={() => setOpen(!open)}>
+          {count} {g.kind === "channels" ? "canais" : "retornos"} {open ? "▲" : "▼"}
+        </button>
+        <button className="btn-ghost h-9 w-9 shrink-0 text-red-400" onClick={remove} aria-label="Apagar grupo">
+          ✕
+        </button>
+      </div>
+      <div className="mt-1.5 flex gap-1.5">
+        {STRIP_COLORS.map((c) => (
+          <button key={c} onClick={() => set({ color: c })} className={`h-6 w-6 rounded-full ${g.color === c ? "ring-2 ring-white" : ""}`} style={{ background: c }} aria-label={`cor ${c}`} />
+        ))}
+      </div>
+      {open && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {g.kind === "channels"
+            ? keys.map((k) => <MemberChip key={k} k={k} on={!!strips[k]?.groups?.includes(g.id)} color={g.color} onClick={() => toggleStrip(k)} />)
+            : Array.from({ length: caps.aux }, (_, i) => i + 1).map((a) => (
+                <AuxChip key={a} aux={a} on={!!auxGroups[String(a)]?.includes(g.id)} color={g.color} onClick={() => toggleAux(a)} />
+              ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GroupsCard() {
+  const groups = useConfig((s) => s.config.groups);
+  const add = (kind: FlagGroup["kind"]) =>
+    updateConfig((c) => ({
+      groups: [
+        ...c.groups,
+        { id: `g${Date.now()}`, name: kind === "channels" ? "Novo grupo" : "Novos retornos", icon: kind === "channels" ? "🎵" : "🎧", color: STRIP_COLORS[c.groups.length % STRIP_COLORS.length], kind },
+      ],
+    }));
+  const section = (kind: FlagGroup["kind"], title: string) => (
+    <div className="space-y-1.5">
+      <div className="text-xs font-semibold text-neutral-400">{title}</div>
+      {groups
+        .filter((g) => g.kind === kind)
+        .map((g) => (
+          <GroupRow key={g.id} g={g} />
+        ))}
+      <button className="btn-ghost h-9 w-full text-sm" onClick={() => add(kind)}>
+        + {kind === "channels" ? "Grupo de canais" : "Grupo de retornos"}
+      </button>
+    </div>
+  );
+  return (
+    <Card title="Grupos (flags) pra mutar de uma vez">
+      <p className="mb-3 text-sm text-neutral-400">
+        Marque microfones, instrumentos e retornos. Os botões aparecem no topo das abas Mesa e Retornos, nos dois visuais.
+      </p>
+      <div className="space-y-4">
+        {section("channels", "Grupos de canais (mutam no PA e dentro de cada retorno)")}
+        {section("returns", "Grupos de retornos (mutam o retorno inteiro)")}
+      </div>
+    </Card>
+  );
+}
+
 function SimpleLayoutCard() {
   const layout = useSimpleKeys();
   const caps = useMixer((s) => s.caps);
-  const hidden = allStripKeys(caps).flatMap((g) => g.keys).filter((k) => !layout.includes(k));
+  const hidden = allStripKeys(caps).flatMap((g) => g.keys).filter((k) => !layout.includes(k) && parseKey(k).kind !== "f");
   const move = (i: number, d: number) => {
     const next = [...layout];
     [next[i], next[i + d]] = [next[i + d], next[i]];
@@ -247,6 +380,7 @@ export function SettingsScreen() {
           <SecurityCard />
         </div>
         <div className="space-y-4">
+          <GroupsCard />
           <SimpleLayoutCard />
           <VersionCard />
           <button

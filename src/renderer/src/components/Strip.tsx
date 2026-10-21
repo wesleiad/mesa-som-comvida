@@ -53,7 +53,7 @@ export function Strip({ skey, target, vertical }: Props) {
       onClick={() => ch?.toggleMute()}
       className={`shrink-0 rounded-xl font-bold transition active:scale-95 ${
         muted ? "bg-red-600 text-white shadow-[0_0_18px_rgba(239,68,68,.45)]" : "bg-neutral-800 text-emerald-300 ring-1 ring-white/10"
-      } ${vertical ? "h-12 w-full text-sm" : "h-14 w-[5.5rem] text-[11px] sm:w-24 sm:text-xs"}`}
+      } ${vertical ? "h-10 w-full text-[11px]" : "h-11 w-[5.5rem] text-[11px]"}`}
       aria-pressed={muted}
     >
       {muted ? "MUTADO" : "DESMUTADO"}
@@ -61,29 +61,29 @@ export function Strip({ skey, target, vertical }: Props) {
   );
 
   const head = (
-    <div className={`flex min-w-0 items-center gap-2 ${vertical ? "w-full flex-col gap-1 px-1 py-2 text-center" : "w-[6.5rem] shrink-0 sm:w-36"}`}>
-      <span className={vertical ? "text-3xl" : "text-xl sm:text-2xl"}>{look.icon}</span>
-      <span className={`line-clamp-2 leading-tight font-semibold break-words ${vertical ? "text-sm" : "min-w-0 text-sm sm:text-[15px]"}`}>{look.name}</span>
+    <div className={`flex min-w-0 items-center gap-2 ${vertical ? "w-full flex-col gap-0.5 px-0.5 py-1 text-center" : "w-[6.5rem] shrink-0 sm:w-32"}`}>
+      <span className={vertical ? "text-xl" : "text-lg"}>{look.icon}</span>
+      <span className={`line-clamp-2 leading-tight font-semibold break-words ${vertical ? "text-xs" : "min-w-0 text-sm"}`}>{look.name}</span>
     </div>
   );
 
   if (vertical) {
     return (
-      <div className={`flex h-full w-[7.5rem] shrink-0 flex-col items-center gap-2 rounded-2xl border bg-neutral-950/80 p-2 ${muted ? "border-red-600/40" : "border-white/10"}`}>
-        <div className="h-1.5 w-full rounded-full" style={{ background: look.color }} />
+      <div className={`flex h-full w-[5.25rem] shrink-0 flex-col items-center gap-1.5 rounded-xl border bg-neutral-950/80 p-1.5 ${muted ? "border-red-600/40" : "border-white/10"}`}>
+        <div className="h-1 w-full rounded-full" style={{ background: look.color }} />
         {head}
         <div className="flex min-h-0 w-full flex-1 justify-center">
           <Fader value={level} onChange={set} max={max} color={look.color} vertical meter={<VuMeter source={vu} vertical />} label={look.name} />
         </div>
-        <div className="font-mono text-sm tabular-nums text-neutral-300">{formatDb(level)} dB</div>
+        <div className="font-mono text-[11px] tabular-nums text-neutral-300">{formatDb(level)}</div>
         {muteBtn}
       </div>
     );
   }
 
   return (
-    <div className={`flex items-center gap-2 rounded-2xl border bg-neutral-950/80 p-2 ${muted ? "border-red-600/40" : "border-white/10"}`}>
-      <div className="h-12 w-1.5 shrink-0 rounded-full" style={{ background: look.color }} />
+    <div className={`flex items-center gap-2 rounded-xl border bg-neutral-950/80 p-1.5 ${muted ? "border-red-600/40" : "border-white/10"}`}>
+      <div className="h-10 w-1 shrink-0 rounded-full" style={{ background: look.color }} />
       {head}
       <div className="min-w-0 flex-1">
         <Fader value={level} onChange={set} max={max} color={look.color} vertical={false} meter={<VuMeter source={vu} vertical={false} />} label={look.name} />

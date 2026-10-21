@@ -28,12 +28,12 @@ const LINK_LOOK: Record<LinkState, { text: string; cls: string }> = {
 function Logo() {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <img src="/icon.svg" alt="" className="h-9 w-9 shrink-0" />
+      <img src="/icon.svg" alt="" className="h-7 w-7 shrink-0" />
       <div className="min-w-0 leading-tight">
-        <div className="truncate text-[15px] font-bold">
+        <div className="truncate text-sm font-bold">
           Comunidade <span className="text-brand-500">Vida</span>
         </div>
-        <div className="truncate text-xs text-neutral-400">Mesa de Som</div>
+        <div className="truncate text-[10px] text-neutral-400">Mesa de Som</div>
       </div>
     </div>
   );
@@ -53,7 +53,7 @@ function MuteAllButton() {
   return (
     <button
       onClick={click}
-      className={`h-11 shrink-0 rounded-xl px-3 text-sm font-bold transition active:scale-95 ${on ? "pulse-red bg-red-600 text-white" : "bg-neutral-800 text-red-300 ring-1 ring-red-500/40"}`}
+      className={`h-9 shrink-0 rounded-lg px-2.5 text-xs font-bold transition active:scale-95 ${on ? "pulse-red bg-red-600 text-white" : "bg-neutral-800 text-red-300 ring-1 ring-red-500/40"}`}
       aria-pressed={on}
     >
       {on ? (
@@ -105,14 +105,14 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col pt-[env(safe-area-inset-top)]">
-      <header className="flex items-center gap-3 border-b border-white/10 bg-neutral-950 px-3 py-2">
+      <header className="flex items-center gap-2 border-b border-white/10 bg-neutral-950 px-2 py-1.5">
         <Logo />
-        <nav className="ml-4 hidden gap-1 md:flex">
+        <nav className="ml-3 hidden gap-1 md:flex">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => go(t.id)}
-              className={`h-11 rounded-xl px-4 font-semibold transition ${current === t.id ? "bg-brand-500 text-white" : "text-neutral-300 hover:bg-white/5"}`}
+              className={`h-9 rounded-lg px-3 text-sm font-semibold transition ${current === t.id ? "bg-brand-500 text-white" : "text-neutral-300 hover:bg-white/5"}`}
             >
               {t.icon} {t.label}
             </button>
@@ -124,12 +124,12 @@ export default function App() {
           </span>
           <span className={`h-3 w-3 rounded-full sm:hidden ${link === "open" ? "bg-emerald-400" : link === "error" ? "bg-red-500" : "bg-amber-400"}`} title={look.text} />
           <MuteAllButton />
-          <div className="flex shrink-0 rounded-xl bg-neutral-800 p-1 ring-1 ring-white/10" role="group" aria-label="Visual do programa">
+          <div className="flex shrink-0 rounded-lg bg-neutral-800 p-0.5 ring-1 ring-white/10" role="group" aria-label="Visual do programa">
             <button
               onClick={() => useUi.setState({ tech: false })}
               aria-pressed={!tech}
               aria-label="Visual básico"
-              className={`h-9 rounded-lg px-2 text-xs font-semibold sm:px-3 sm:text-sm ${!tech ? "bg-brand-500 text-white" : "text-neutral-400"}`}
+              className={`h-8 rounded-md px-2 text-xs font-semibold sm:px-3 ${!tech ? "bg-brand-500 text-white" : "text-neutral-400"}`}
             >
               Básico
             </button>
@@ -137,7 +137,7 @@ export default function App() {
               onClick={() => !tech && setAskPin(true)}
               aria-pressed={tech}
               aria-label="Visual técnico"
-              className={`h-9 rounded-lg px-2 text-xs font-semibold sm:px-3 sm:text-sm ${tech ? "bg-amber-400 text-black" : "text-neutral-400"}`}
+              className={`h-8 rounded-md px-2 text-xs font-semibold sm:px-3 ${tech ? "bg-amber-400 text-black" : "text-neutral-400"}`}
             >
               {tech ? "Técnico" : "🔒 Técnico"}
             </button>
@@ -172,9 +172,9 @@ export default function App() {
           <button
             key={t.id}
             onClick={() => go(t.id)}
-            className={`flex h-16 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold ${current === t.id ? "text-brand-400" : "text-neutral-400"}`}
+            className={`flex h-12 flex-1 flex-col items-center justify-center text-[11px] font-semibold ${current === t.id ? "text-brand-400" : "text-neutral-400"}`}
           >
-            <span className="text-xl">{t.icon}</span>
+            <span className="text-base">{t.icon}</span>
             {t.label}
           </button>
         ))}

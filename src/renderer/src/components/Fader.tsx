@@ -101,7 +101,7 @@ export function Fader({ value, onChange, max = 1, color, vertical, meter, label,
       aria-valuenow={value}
       aria-valuetext={`${formatDb(value)} dB`}
       className={`relative touch-none select-none rounded-2xl bg-neutral-900 ring-1 ring-white/10 outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${
-        vertical ? "h-full w-16 cursor-ns-resize" : "h-14 w-full cursor-ew-resize"
+        vertical ? "h-full w-12 cursor-ns-resize" : "h-11 w-full cursor-ew-resize"
       } ${disabled ? "opacity-40" : ""}`}
     >
       {meter && <div className="pointer-events-none absolute inset-1.5 overflow-hidden rounded-xl">{meter}</div>}
@@ -117,7 +117,7 @@ export function Fader({ value, onChange, max = 1, color, vertical, meter, label,
         <div key={db} className="pointer-events-none absolute" style={pos(DBToFaderValue(db) * 100)}>
           <div
             className={`${db === 0 ? "bg-white/50" : "bg-white/15"} ${
-              vertical ? "absolute left-0 h-px w-16 translate-y-1/2" : "absolute top-0 h-14 w-px -translate-x-1/2"
+              vertical ? "absolute left-0 h-px w-12 translate-y-1/2" : "absolute top-0 h-11 w-px -translate-x-1/2"
             }`}
           />
         </div>
@@ -127,7 +127,7 @@ export function Fader({ value, onChange, max = 1, color, vertical, meter, label,
         className="pointer-events-none absolute rounded-xl opacity-30"
         style={{
           background: color,
-          ...(vertical ? { left: 22, right: 22, bottom: 6, height: `calc(${pct}% - 6px)` } : { top: 22, bottom: 22, left: 6, width: `calc(${pct}% - 6px)` }),
+          ...(vertical ? { left: 18, right: 18, bottom: 6, height: `calc(${pct}% - 6px)` } : { top: 16, bottom: 16, left: 6, width: `calc(${pct}% - 6px)` }),
         }}
       />
 
@@ -136,11 +136,11 @@ export function Fader({ value, onChange, max = 1, color, vertical, meter, label,
         style={{
           background: `linear-gradient(${vertical ? "180deg" : "90deg"}, #f5f5f5, #bdbdbd)`,
           ...(vertical
-            ? { left: 2, right: 2, height: 30, bottom: `calc(${pct}% - 15px)` }
-            : { top: 2, bottom: 2, width: 30, left: `calc(${pct}% - 15px)` }),
+            ? { left: 2, right: 2, height: 26, bottom: `calc(${pct}% - 13px)` }
+            : { top: 2, bottom: 2, width: 26, left: `calc(${pct}% - 13px)` }),
         }}
       >
-        <div className={vertical ? "h-1 w-8 rounded" : "h-8 w-1 rounded"} style={{ background: color }} />
+        <div className={vertical ? "h-1 w-6 rounded" : "h-6 w-1 rounded"} style={{ background: color }} />
       </div>
     </div>
   );
@@ -164,8 +164,8 @@ export function SlimFader({ value, onChange, label, color }: { value: number; on
     >
       {/* escala */}
       {MARKS.map((db) => (
-        <div key={db} className="pointer-events-none absolute right-1/2 left-0 flex items-center justify-end pr-3" style={{ bottom: `${DBToFaderValue(db) * 100}%`, transform: "translateY(50%)" }}>
-          <span className={`mr-1 font-mono text-[9px] leading-none ${db === 0 ? "text-neutral-200" : "text-neutral-500"}`}>{db > 0 ? `+${db}` : db}</span>
+        <div key={db} className="pointer-events-none absolute right-1/2 left-0 flex items-center justify-end pr-2.5" style={{ bottom: `${DBToFaderValue(db) * 100}%`, transform: "translateY(50%)" }}>
+          <span className={`mr-0.5 font-mono text-[8px] leading-none ${db === 0 ? "text-neutral-200" : "text-neutral-500"}`}>{db > 0 ? `+${db}` : db}</span>
           <span className={`h-px ${db === 0 ? "w-2 bg-neutral-300" : "w-1.5 bg-neutral-600"}`} />
         </div>
       ))}
@@ -174,8 +174,8 @@ export function SlimFader({ value, onChange, label, color }: { value: number; on
       <div className="pointer-events-none absolute bottom-2 left-1/2 w-1.5 -translate-x-1/2 rounded-full opacity-70" style={{ height: `calc(${pct}% - 8px)`, background: color }} />
       {/* botão */}
       <div
-        className="pointer-events-none absolute left-1/2 h-9 w-7 -translate-x-1/2 rounded-[5px] shadow-md shadow-black/70"
-        style={{ bottom: `calc(${pct}% - 18px)`, background: "linear-gradient(180deg,#5a5a5a 0%,#2c2c2c 45%,#1a1a1a 55%,#3a3a3a 100%)" }}
+        className="pointer-events-none absolute left-1/2 h-8 w-6 -translate-x-1/2 rounded-[4px] shadow-md shadow-black/70"
+        style={{ bottom: `calc(${pct}% - 16px)`, background: "linear-gradient(180deg,#5a5a5a 0%,#2c2c2c 45%,#1a1a1a 55%,#3a3a3a 100%)" }}
       >
         <div className="absolute inset-x-1 top-1/2 h-0.5 -translate-y-1/2 bg-white" />
       </div>

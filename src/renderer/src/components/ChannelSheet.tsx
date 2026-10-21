@@ -27,6 +27,8 @@ export function ChannelSheet({ skey, onClose }: { skey: StripKey; onClose: () =>
   const gainDb = useObs(hw?.gainDB$, 0);
   const phantom = useObs(hw?.phantom$, false);
   const [label, setLabel] = useState(cfg.strips[skey]?.label ?? "");
+  const flags = cfg.strips[skey]?.groups ?? [];
+  const channelGroups = cfg.groups.filter((g) => g.kind === "channels");
 
   const layout = cfg.simpleLayout.length ? cfg.simpleLayout : allStripKeys(caps)[0].keys;
   const inSimple = layout.includes(skey);
@@ -99,10 +101,34 @@ export function ChannelSheet({ skey, onClose }: { skey: StripKey; onClose: () =>
         </section>
 
         <section className="space-y-3">
-          <h3 className="section-title">Pros voluntários</h3>
+          <h3 className="section-title">Grupos (flags)</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {channelGroups.map((g) => {
+              const on = flags.includes(g.id);
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => updateStrip(skey, { groups: on ? flags.filter((x) => x !== g.id) : [...flags, g.id] })}
+                  aria-pressed={on}
+                  className={`h-10 rounded-xl px-3 text-sm font-semibold ${on ? "text-black" : "btn-ghost"}`}
+                  style={on ? { background: g.color } : undefined}
+                >
+                  {on ? "✓ " : ""}
+                  {g.icon} {g.name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-neutral-500">Os botões de grupo mutam todos os canais marcados de uma vez, no PA e nos retornos.</p>
+
+          <h3 className="section-title pt-2">Pros voluntários</h3>
+          {kind === "f" ? (
+            <p className="text-sm text-neutral-500">Efeitos ficam travados no visual básico.</p>
+          ) : (
           <button onClick={toggleSimple} className={`h-12 w-full rounded-xl font-semibold ${inSimple ? "btn-brand" : "btn-ghost"}`}>
             {inSimple ? "✓ Aparece no visual básico" : "Escondido no visual básico"}
           </button>
+          )}
           <div>
             <span className="field-label">Volume máximo no visual básico</span>
             <div className="flex flex-wrap gap-1.5">

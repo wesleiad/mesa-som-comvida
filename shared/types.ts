@@ -12,6 +12,22 @@ export interface StripSettings {
   color?: string;
   /** Teto do fader no modo simples (dB). Evita voluntário "estourar" o som. */
   maxDb?: number;
+  /** Grupos (flags) de canais a que este canal pertence. */
+  groups?: string[];
+}
+
+/**
+ * Grupo (flag) pra mutar várias coisas de uma vez, como os grupos de mute do Mixing Station.
+ * - "channels": canais (ex.: "Mic com fio", "Instrumentos"). Na aba Mesa muta no PA;
+ *   na aba Retornos muta só dentro do retorno aberto.
+ * - "returns": retornos inteiros (ex.: "Retornos da banda", "In-ear").
+ */
+export interface FlagGroup {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  kind: "channels" | "returns";
 }
 
 export interface ReturnSettings {
@@ -41,6 +57,9 @@ export interface AppConfig {
   strips: Partial<Record<StripKey, StripSettings>>;
   /** Retornos (AUX) que aparecem pros voluntários. */
   returns: ReturnSettings[];
+  groups: FlagGroup[];
+  /** Grupos de retornos de cada AUX (chave = número da AUX). */
+  auxGroups: Record<string, string[]>;
   scenes: SceneButton[];
   /** Pedir confirmação antes de silenciar tudo / trocar cena. */
   confirmDangerous: boolean;
