@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmHost, PinDialog, confirmBox } from "./components/Dialog";
 import { DiscoverDialog } from "./components/DiscoverDialog";
-import { UpdateBanner } from "./components/UpdateBanner";
+import { isPc, UpdateBanner } from "./components/UpdateBanner";
 import { connectMixer, useMixer, useObs, type LinkState } from "./lib/mixer";
 import { useConfig } from "./state/config";
 import { useUi, type Tab } from "./state/ui";
@@ -81,6 +81,22 @@ export default function App() {
   useEffect(() => {
     connectMixer(cfg.mixerIp, cfg.simulator);
   }, [cfg.mixerIp, cfg.simulator]);
+
+  // Segurança: ao abrir o programa no computador, a mesa começa toda mutada
+  // ("Silenciar tudo"). Só uma vez por mesa em cada abertura — se a rede cair
+  // e voltar no meio do culto, não muta de novo. Tablets e celulares nunca mutam.
+  const ui = useMixer((s) => s.ui);
+  useEffect(() => {
+    if (link !== "open" || !ui || !cfg.muteOnStart || !isPc) return;
+    const key = `mutedOnStart:${simulator ? "simulador" : cfg.mixerIp}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      /* sem armazenamento: muta mesmo assim */
+    }
+    ui.muteGroup("all").mute();
+  }, [link, ui, cfg.muteOnStart, cfg.mixerIp, simulator]);
 
   const tabs = TABS.filter((t) => !t.tech || tech);
   const current = tabs.some((t) => t.id === tab) ? tab : "mix";

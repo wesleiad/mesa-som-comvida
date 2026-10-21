@@ -206,6 +206,13 @@ function SecurityCard() {
         <span>Pedir confirmação antes de silenciar tudo e trocar de cena</span>
         <input type="checkbox" className="h-6 w-6 accent-[#fc2747]" checked={cfg.confirmDangerous} onChange={(e) => updateConfig({ confirmDangerous: e.target.checked })} />
       </label>
+      <label className="mt-3 flex items-center justify-between gap-3">
+        <span>
+          Começar com tudo mutado ao abrir o programa
+          <span className="block text-xs text-neutral-500">Só no computador. Toque em "TUDO MUTADO" pra soltar o som.</span>
+        </span>
+        <input type="checkbox" className="h-6 w-6 accent-[#fc2747]" checked={cfg.muteOnStart} onChange={(e) => updateConfig({ muteOnStart: e.target.checked })} />
+      </label>
     </Card>
   );
 }

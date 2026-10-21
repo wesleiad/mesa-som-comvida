@@ -11,6 +11,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   returns: [],
   scenes: [],
   confirmDangerous: true,
+  muteOnStart: true,
 };
 
 /** Completa um arquivo de configuração antigo/incompleto com os padrões,

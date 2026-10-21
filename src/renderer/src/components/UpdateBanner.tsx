@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { UpdateStatus } from "@shared/types";
 
-/** A atualização é do programa do computador: tablets e celulares não mostram o aviso. */
-const isPc = ["127.0.0.1", "localhost"].includes(location.hostname);
+/** Janela do programa instalado no computador (não um navegador de tablet/celular). */
+export const isPc = /Electron/i.test(navigator.userAgent);
 
 export function useUpdateStatus(): UpdateStatus | null {
   const [st, setSt] = useState<UpdateStatus | null>(null);

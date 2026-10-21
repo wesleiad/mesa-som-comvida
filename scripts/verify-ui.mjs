@@ -56,6 +56,14 @@ await win.waitForSelector("text=Volume geral", { timeout: 15000 });
 await win.waitForTimeout(1200);
 
 check("simulador conectado", (await win.locator("text=🧪 Simulador").count()) > 0);
+
+// ao abrir, a mesa começa toda mutada; um toque solta o som
+await win.waitForSelector("text=TUDO MUTADO", { timeout: 5000 }).catch(() => {});
+check("abre com tudo mutado", (await win.locator("text=TUDO MUTADO").count()) === 1);
+await win.screenshot({ path: path.join(SHOTS, "00-desktop-abre-mutado.png") });
+await win.locator("button", { hasText: "TUDO MUTADO" }).click();
+await win.waitForTimeout(150);
+check("tocar em TUDO MUTADO solta o som", (await win.locator("text=TUDO MUTADO").count()) === 0);
 const sliders = win.locator('[data-kind="fader"]');
 check("faders das 24 entradas + geral", (await sliders.count()) === 25, `(${await sliders.count()})`);
 check("nome do canal vindo da mesa", (await win.locator("text=Voz Pastor").count()) > 0);
@@ -158,6 +166,7 @@ await phone.goto("http://127.0.0.1:8078/");
 await phone.waitForSelector("text=Volume geral");
 await phone.waitForTimeout(800);
 check("celular recebe nome salvo no PC", (await phone.locator("text=Pastor Fulano").count()) > 0);
+check("celular não muta tudo ao abrir", (await phone.locator("text=TUDO MUTADO").count()) === 0);
 check("celular começa no visual básico", (await phone.locator('button[aria-label="Visual básico"]').getAttribute("aria-pressed")) === "true");
 const overflow = await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 check("celular sem rolagem lateral", !overflow);

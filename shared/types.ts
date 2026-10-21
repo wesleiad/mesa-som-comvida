@@ -44,6 +44,8 @@ export interface AppConfig {
   scenes: SceneButton[];
   /** Pedir confirmação antes de silenciar tudo / trocar cena. */
   confirmDangerous: boolean;
+  /** Ao abrir o programa no computador, liga o "Silenciar tudo" da mesa (segurança contra microfonia/estouro). */
+  muteOnStart: boolean;
 }
 
 export interface UpdateStatus {
