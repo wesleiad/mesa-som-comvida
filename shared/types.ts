@@ -73,6 +73,8 @@ export interface UpdateStatus {
   next?: string;
   percent?: number;
   error?: string;
+  /** App Android: link pra baixar o .apk da versão nova. */
+  url?: string;
 }
 
 /** Mesa Soundcraft Ui encontrada na rede pelo "Procurar mesa". */

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FoundMixer } from "@shared/types";
-import { updateConfig, useConfig } from "../state/config";
+import { discoverOnDevice } from "../lib/discoverWs";
+import { isNativeApp } from "../lib/platform";
+import { getPcAddress, updateConfig, useConfig } from "../state/config";
 import { Modal } from "./Dialog";
 
 /** Procura Soundcraft Ui na rede (a busca roda no computador da igreja) e conecta com um toque. */
@@ -9,9 +11,25 @@ export function DiscoverDialog({ onClose }: { onClose: () => void }) {
   const [found, setFound] = useState<FoundMixer[] | null>(null);
   const [error, setError] = useState("");
 
+  const [pct, setPct] = useState(0);
+  const [partial, setPartial] = useState<FoundMixer[]>([]);
+
   const search = useCallback(async () => {
     setFound(null);
     setError("");
+    setPct(0);
+    setPartial([]);
+    if (isNativeApp) {
+      // App Android: o próprio aparelho procura (não precisa do computador).
+      const known = [useConfig.getState().config.mixerIp, getPcAddress()];
+      setFound(
+        await discoverOnDevice(known, (p, f) => {
+          setPct(p);
+          setPartial(f);
+        }),
+      );
+      return;
+    }
     try {
       const res = await fetch("/api/discover", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -36,8 +54,13 @@ export function DiscoverDialog({ onClose }: { onClose: () => void }) {
       {found === null ? (
         <div className="flex flex-col items-center gap-4 py-8 text-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-500/30 border-t-brand-500" />
-          <p className="text-lg">Procurando a mesa na rede…</p>
-          <p className="text-sm text-neutral-500">Leva uns 5 segundos.</p>
+          <p className="text-lg">Procurando a mesa na rede…{isNativeApp && ` ${pct}%`}</p>
+          <p className="text-sm text-neutral-500">{isNativeApp ? "Pode levar até meio minuto." : "Leva uns 5 segundos."}</p>
+          {partial.map((m) => (
+            <button key={m.ip} className="btn-brand h-12 w-full px-4" onClick={() => use(m.ip)}>
+              Achei: Soundcraft {m.model} ({m.ip}) — usar esta
+            </button>
+          ))}
         </div>
       ) : found.length > 0 ? (
         <div className="space-y-3">
@@ -67,7 +90,7 @@ export function DiscoverDialog({ onClose }: { onClose: () => void }) {
           <ul className="list-disc space-y-1 pl-5 text-sm text-neutral-400">
             <li>Confira se a mesa está ligada (leva uns 40 segundos pra iniciar).</li>
             <li>
-              O <b>computador</b> precisa estar no Wi-Fi da mesa (ex.: "Soundcraft Ui24-…") ou no mesmo roteador que ela, por Wi-Fi ou cabo.
+              O <b>{isNativeApp ? "celular/tablet" : "computador"}</b> precisa estar no Wi-Fi da mesa (ex.: "Soundcraft Ui24-…") ou no mesmo roteador que ela, por Wi-Fi ou cabo.
             </li>
             <li>Se souber o IP, digite em Ajustes → Conexão com a mesa (visual técnico).</li>
           </ul>

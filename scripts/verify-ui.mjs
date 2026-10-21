@@ -236,6 +236,41 @@ await phone.waitForTimeout(600);
 check("celular entra no visual técnico", (await phone.locator('[data-kind="pan"]').count()) > 0);
 await phone.screenshot({ path: path.join(SHOTS, "12-celular-tecnico.png") });
 
+// ---- "app Android": a mesma tela fingindo estar dentro do Capacitor ----
+// Abre por "localhost" (outra origem que 127.0.0.1) pra testar a sincronização
+// entre origens diferentes, como no aparelho de verdade.
+const appCtx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+await appCtx.addInitScript((ip) => {
+  window.Capacitor = { isNativePlatform: () => true };
+  if (!localStorage.getItem("mesa.config")) localStorage.setItem("mesa.config", JSON.stringify({ mixerIp: ip, simulator: true }));
+}, FAKE_IP);
+const appPage = await appCtx.newPage();
+appPage.on("pageerror", (e) => errors.push(`app: ${e.message}`));
+await appPage.goto("http://localhost:8078/");
+await appPage.waitForSelector("text=Volume geral");
+await appPage.waitForTimeout(600);
+check("app abre sozinho (sem computador)", (await appPage.locator("text=Voz Pastor").count()) > 0 && (await appPage.locator("text=Sem contato com o computador").count()) === 0);
+await appPage.locator('button[aria-label="Visual técnico"]').tap();
+for (const d of "1234") await appPage.keyboard.press(d);
+await appPage.locator("nav >> text=Ajustes").first().tap();
+check("app mostra cartão do computador (sem QR)", (await appPage.locator("text=Computador da igreja (opcional)").count()) === 1 && (await appPage.locator('img[alt="QR code do endereço"]').count()) === 0);
+await appPage.locator("button", { hasText: "Procurar mesa na rede" }).tap();
+await appPage.waitForSelector(`text=Achei: Soundcraft Ui24R (${FAKE_IP})`, { timeout: 30000 }).catch(() => {});
+check("app acha a mesa sozinho (sem computador)", (await appPage.locator(`text=Achei: Soundcraft Ui24R (${FAKE_IP})`).count()) === 1);
+await appPage.screenshot({ path: path.join(SHOTS, "13-app-procurar.png") });
+await appPage.keyboard.press("Escape");
+await appPage.locator('input[placeholder="192.168.1.13"]').fill("127.0.0.1:8078");
+await appPage.locator("button", { hasText: "Conectar" }).last().tap();
+await appPage.waitForSelector("text=Sincronizado com o computador", { timeout: 8000 }).catch(() => {});
+check("app sincroniza com o computador", (await appPage.locator("text=Sincronizado com o computador").count()) === 1);
+await appPage.locator("nav >> text=Mesa").first().tap();
+await appPage.waitForTimeout(500);
+check("app recebe os nomes do computador", (await appPage.locator("text=Pastor Ciclano").count()) > 0);
+await appPage.screenshot({ path: path.join(SHOTS, "14-app-sincronizado.png") });
+await appPage.reload();
+await appPage.waitForSelector("text=Volume geral");
+check("app guarda os ajustes no aparelho", (await appPage.locator("text=Pastor Ciclano").count()) > 0);
+
 check("sem erros de JavaScript", errors.length === 0, errors.join(" | "));
 
 await browser.close();

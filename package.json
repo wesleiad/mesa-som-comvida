@@ -16,6 +16,8 @@
     "generate:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/core": "8.5.2",
     "@fontsource/fredoka": "5.2.8",
     "electron-updater": "6.3.9",
     "qrcode": "1.5.4",
@@ -25,6 +27,7 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.2",
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.20.5",

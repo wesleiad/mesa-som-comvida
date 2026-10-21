@@ -1,5 +1,6 @@
-# Cada envio pro branch main gera um instalador novo e publica como Release.
-# O programa instalado na igreja procura essas Releases e se atualiza sozinho.
+# Cada envio pro branch main gera uma versão nova e publica como Release:
+# - instalador do Windows (o programa instalado se atualiza sozinho);
+# - app Android .apk (o app avisa quando tem versão nova).
 name: Publicar versão
 
 on:
@@ -15,8 +16,11 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+env:
+  APP_VERSION: 1.0.${{ github.run_number }}
+
 jobs:
-  release:
+  windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,10 +31,46 @@ jobs:
       - run: npm ci
       - name: Versão automática (1.0.<número da execução>)
         shell: bash
-        run: npm version "1.0.${{ github.run_number }}" --no-git-tag-version --allow-same-version
+        run: npm version "$APP_VERSION" --no-git-tag-version --allow-same-version
       - run: npm run typecheck
       - run: npx electron-vite build
       - name: Gerar instalador e publicar Release
         run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  android:
+    needs: windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm version "$APP_VERSION" --no-git-tag-version --allow-same-version
+      - run: npx electron-vite build
+      - run: npx cap sync android
+      - name: Chave de assinatura
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/mesa-release.p12"
+      - name: Gerar app Android assinado
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+        env:
+          APP_VERSION_NAME: ${{ env.APP_VERSION }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/mesa-release.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      - name: Anexar o .apk na Release
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "Mesa-de-Som-ComVida-$APP_VERSION.apk"
+          gh release upload "v$APP_VERSION" "Mesa-de-Som-ComVida-$APP_VERSION.apk" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,6 +5,7 @@ import { isPc, UpdateBanner } from "./components/UpdateBanner";
 import { connectMixer, useMixer, useObs, type LinkState } from "./lib/mixer";
 import { useConfig } from "./state/config";
 import { useUi, type Tab } from "./state/ui";
+import { isNativeApp } from "./lib/platform";
 import { MixScreen } from "./screens/MixScreen";
 import { ReturnsScreen } from "./screens/ReturnsScreen";
 import { ScenesScreen } from "./screens/ScenesScreen";
@@ -72,6 +73,26 @@ function MuteAllButton() {
 export default function App() {
   const cfg = useConfig((s) => s.config);
   const online = useConfig((s) => s.online);
+  const hasPc = useConfig((s) => s.hasPc);
+
+  // No app Android a tela não apaga sozinha no meio do culto.
+  useEffect(() => {
+    if (!isNativeApp || !("wakeLock" in navigator)) return;
+    let lock: { release(): Promise<void> } | null = null;
+    const grab = () => {
+      if (document.visibilityState !== "visible") return;
+      navigator.wakeLock
+        .request("screen")
+        .then((l) => (lock = l))
+        .catch(() => {});
+    };
+    grab();
+    document.addEventListener("visibilitychange", grab);
+    return () => {
+      document.removeEventListener("visibilitychange", grab);
+      lock?.release().catch(() => {});
+    };
+  }, []);
   const link = useMixer((s) => s.link);
   const simulator = useMixer((s) => s.simulator);
   const { tab, tech } = useUi();
@@ -158,7 +179,13 @@ export default function App() {
           </button>
         </div>
       )}
-      {!online && <div className="bg-amber-500/15 px-3 py-1 text-center text-xs text-amber-300">Sem contato com o computador da igreja: mudanças de nomes/cenas não estão sendo salvas.</div>}
+      {hasPc && !online && (
+        <div className="bg-amber-500/15 px-3 py-1 text-center text-xs text-amber-300">
+          {isNativeApp
+            ? "Sem contato com o computador da igreja: usando os ajustes guardados neste aparelho."
+            : "Sem contato com o computador da igreja: mudanças de nomes/cenas não estão sendo salvas."}
+        </div>
+      )}
 
       <main className="flex min-h-0 flex-1 flex-col">
         {current === "mix" && <MixScreen />}

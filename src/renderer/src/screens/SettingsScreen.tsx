@@ -8,7 +8,8 @@ import { DiscoverDialog } from "../components/DiscoverDialog";
 import { useUpdateStatus } from "../components/UpdateBanner";
 import { useStripLook } from "../components/Strip";
 import { allStripKeys, parseKey, useMixer, useObs } from "../lib/mixer";
-import { updateConfig, useConfig } from "../state/config";
+import { getPcAddress, setPcAddress, updateConfig, useConfig } from "../state/config";
+import { isNativeApp } from "../lib/platform";
 import { useUi } from "../state/ui";
 import { useSimpleKeys } from "./MixScreen";
 
@@ -76,6 +77,45 @@ function ConnectionCard() {
         <a href={`http://${cfg.mixerIp}/`} target="_blank" rel="noreferrer" className="btn-ghost mt-3 flex h-11 items-center justify-center text-sm">
           Abrir a tela original da mesa (EQ, compressor, efeitos) ↗
         </a>
+      )}
+    </Card>
+  );
+}
+
+/** App Android: liga o app ao computador da igreja pra usar os mesmos nomes, grupos e cenas. */
+function PcSyncCard() {
+  const online = useConfig((s) => s.online);
+  const hasPc = useConfig((s) => s.hasPc);
+  const [addr, setAddr] = useState(getPcAddress());
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  async function connect(a: string) {
+    setBusy(true);
+    setMsg("");
+    const ok = await setPcAddress(a);
+    setBusy(false);
+    setMsg(!a.trim() ? "Este aparelho agora usa só os próprios ajustes." : ok ? "Pronto: ajustes copiados e sincronizando com o computador." : "Não achei o computador nesse endereço. Ele está ligado, com o programa aberto, no mesmo Wi-Fi?");
+  }
+  return (
+    <Card title="Computador da igreja (opcional)">
+      <p className="mb-3 text-sm text-neutral-400">
+        O app funciona sozinho, sem internet e sem o computador. Se quiser usar os mesmos nomes, grupos e cenas do computador da igreja, digite o endereço
+        que aparece em Ajustes no programa do computador (ex.: 192.168.1.13).
+      </p>
+      <div className="flex gap-2">
+        <input className="input flex-1 font-mono" inputMode="decimal" placeholder="192.168.1.13" value={addr} onChange={(e) => setAddr(e.target.value)} />
+        <button className="btn-brand h-12 px-4 disabled:opacity-50" disabled={busy} onClick={() => connect(addr)}>
+          {busy ? "…" : "Conectar"}
+        </button>
+      </div>
+      <div className="mt-2 text-sm">
+        {hasPc ? (online ? <span className="text-emerald-300">✅ Sincronizado com o computador</span> : <span className="text-amber-300">Sem contato com o computador agora (usando os ajustes guardados no aparelho)</span>) : <span className="text-neutral-400">Usando só os ajustes deste aparelho.</span>}
+      </div>
+      {msg && <p className="mt-1 text-xs text-neutral-400">{msg}</p>}
+      {hasPc && (
+        <button className="btn-ghost mt-2 h-9 w-full text-xs" onClick={() => { setAddr(""); void connect(""); }}>
+          Parar de sincronizar
+        </button>
       )}
     </Card>
   );
@@ -355,17 +395,21 @@ function VersionCard() {
   if (!st) return null;
   const text = {
     disabled: "Atualização automática só funciona no programa instalado.",
-    idle: "Você está com a versão mais nova.",
+    idle: st.error ? "Sem internet agora; confiro de novo depois." : "Você está com a versão mais nova.",
     checking: "Procurando atualização…",
     downloading: `Baixando a versão ${st.next ?? ""}… ${st.percent ?? 0}%`,
-    ready: `Versão ${st.next} pronta: instala quando fechar o programa.`,
+    ready: isNativeApp ? `Versão ${st.next} disponível: toque em "Baixar e instalar" na faixa verde.` : `Versão ${st.next} pronta: instala quando fechar o programa.`,
   }[st.state];
   return (
-    <Card title="Programa">
+    <Card title={isNativeApp ? "App" : "Programa"}>
       <div className="text-sm">
         Versão <b>{st.current}</b> — {text}
       </div>
-      <p className="mt-1 text-xs text-neutral-500">O programa procura atualização sozinho no GitHub ao abrir e a cada 30 minutos.</p>
+      <p className="mt-1 text-xs text-neutral-500">
+        {isNativeApp
+          ? "Quando o aparelho tiver internet, o app avisa se tem versão nova no GitHub (aparece uma faixa verde pra baixar)."
+          : "O programa procura atualização sozinho no GitHub ao abrir e a cada 30 minutos."}
+      </p>
     </Card>
   );
 }
@@ -376,7 +420,7 @@ export function SettingsScreen() {
       <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-2">
         <div className="space-y-4">
           <ConnectionCard />
-          <DevicesCard />
+          {isNativeApp ? <PcSyncCard /> : <DevicesCard />}
           <SecurityCard />
         </div>
         <div className="space-y-4">

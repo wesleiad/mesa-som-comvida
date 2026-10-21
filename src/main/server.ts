@@ -123,6 +123,16 @@ export async function startServer(opts: ServerOptions) {
 
   const server = createServer(async (req, res) => {
     const url = (req.url ?? "/").split("?")[0];
+    // O app Android sincroniza os ajustes com este computador pela rede (outra origem).
+    if (url.startsWith("/api/")) {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      if (req.method === "OPTIONS") {
+        res.writeHead(204).end();
+        return;
+      }
+    }
     try {
       if (url === "/api/config" && req.method === "GET") return json(res, 200, await loadConfig());
       if (url === "/api/config" && req.method === "PUT") {
