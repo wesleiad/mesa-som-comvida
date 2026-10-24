@@ -163,13 +163,20 @@ await win.locator("button", { hasText: "Retorno Ministro" }).first().click();
 
 // cenas: liberar uma cena
 await win.locator("nav >> text=Cenas").first().click();
-await win.waitForSelector("text=Culto Quarta");
-await win.locator("div.rounded-xl", { hasText: "Culto Quarta" }).locator("button", { hasText: "Voluntários" }).click();
-check("cena liberada", (await win.locator("button.h-28", { hasText: "Culto Quarta" }).count()) === 1);
-await win.locator("button.h-28", { hasText: "Culto Quarta" }).click();
+await win.waitForSelector("text=Eqp. Weslei");
+await win.locator("div.rounded-xl", { hasText: "Eqp. Weslei" }).locator("button", { hasText: "Voluntários" }).click();
+check("cena liberada", (await win.locator("button.h-28", { hasText: "Eqp. Weslei" }).count()) === 1);
+await win.locator("button.h-28", { hasText: "Eqp. Weslei" }).click();
 await win.locator('[role="dialog"] button', { hasText: "Carregar cena" }).click();
 await win.waitForTimeout(200);
 check("carregar cena muda a cena ativa", (await win.locator("button.h-28", { hasText: "● ativa" }).count()) === 1);
+// cues também viram botão pros voluntários
+await win.locator("div.rounded-xl", { hasText: "MOISES" }).locator("button", { hasText: "Voluntários" }).click();
+check("cue liberado", (await win.locator("button.h-28", { hasText: "MOISES" }).count()) === 1);
+await win.locator("button.h-28", { hasText: "MOISES" }).click();
+await win.locator('[role="dialog"] button', { hasText: "Carregar cena" }).click();
+await win.waitForTimeout(400);
+check("carregar cue marca o cue ativo", (await win.locator("button.h-28", { hasText: "MOISES" }).filter({ hasText: "● ativa" }).count()) === 1);
 await win.screenshot({ path: path.join(SHOTS, "06-desktop-cenas.png") });
 
 // ajustes
@@ -198,8 +205,10 @@ check("abrir arquivo de ajustes", cfgAfter.strips["i.2"]?.label === "Back Import
 await win.locator("button", { hasText: "Procurar mesa na rede" }).click();
 await win.waitForSelector(`text=${FAKE_IP}`, { timeout: 30000 });
 check("procurar mesa acha a Ui24R", (await win.locator('[role="dialog"]', { hasText: "Soundcraft Ui24R" }).count()) === 1);
+// se a mesa de verdade estiver na rede ela também aparece: escolher sempre a falsa
+const fakeRow = win.locator('[role="dialog"] div.rounded-2xl', { hasText: FAKE_IP }).last();
 await win.screenshot({ path: path.join(SHOTS, "07b-procurar-mesa.png") });
-await win.locator('[role="dialog"] button', { hasText: "Usar esta" }).click();
+await fakeRow.locator('button', { hasText: 'Usar esta' }).click();
 await win.waitForSelector("text=Mesa conectada", { timeout: 10000 }).catch(() => {});
 await win.screenshot({ path: path.join(SHOTS, "07c-conectado.png") });
 check("conecta na mesa encontrada", (await win.locator("text=Mesa conectada").count()) > 0 && (await win.locator("dd", { hasText: "teste" }).count()) > 0);

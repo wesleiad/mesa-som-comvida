@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import type { ShowsWithDetails } from "soundcraft-ui-connection";
 import { STRIP_COLORS } from "@shared/defaults";
 import type { SceneButton } from "@shared/types";
+
+type SceneKind = NonNullable<SceneButton["kind"]>;
 import { confirmBox } from "../components/Dialog";
 import { useMixer, useObs } from "../lib/mixer";
 import { updateConfig, useConfig } from "../state/config";
@@ -12,26 +14,29 @@ function useShows() {
   const shows = useObs<ShowsWithDetails>(ui?.shows.shows$, {});
   const currentShow = useObs(ui?.shows.currentShow$, "");
   const currentSnap = useObs(ui?.shows.currentSnapshot$, "");
-  return { ui, shows, currentShow, currentSnap };
+  const currentCue = useObs(ui?.shows.currentCue$, "");
+  return { ui, shows, currentShow, currentSnap, currentCue };
 }
 
 export function ScenesScreen() {
   const tech = useUi((s) => s.tech);
   const scenes = useConfig((s) => s.config.scenes);
   const confirmDangerous = useConfig((s) => s.config.confirmDangerous);
-  const { ui, shows, currentShow, currentSnap } = useShows();
+  const { ui, shows, currentShow, currentSnap, currentCue } = useShows();
 
-  async function load(show: string, snapshot: string, label: string) {
+  async function load(show: string, name: string, label: string, kind: SceneKind = "snapshot") {
     if (!ui) return;
-    if (
-      confirmDangerous &&
-      !(await confirmBox(`Carregar "${label}"?`, "Todos os volumes e mutes da mesa vão mudar pra essa cena. Use só antes do culto ou entre os momentos.", "Carregar cena"))
-    )
-      return;
-    ui.shows.loadSnapshot(show, snapshot);
+    const what =
+      kind === "cue"
+        ? "Parte dos ajustes da mesa vai mudar pra esse cue. Use só antes do culto ou entre os momentos."
+        : "Todos os volumes e mutes da mesa vão mudar pra essa cena. Use só antes do culto ou entre os momentos.";
+    if (confirmDangerous && !(await confirmBox(`Carregar "${label}"?`, what, "Carregar cena"))) return;
+    if (kind === "cue") ui.shows.loadCue(show, name);
+    else ui.shows.loadSnapshot(show, name);
   }
 
-  const isCurrent = (show: string, snap: string) => show === currentShow && snap === currentSnap;
+  const isCurrent = (show: string, name: string, kind: SceneKind = "snapshot") =>
+    show === currentShow && name === (kind === "cue" ? currentCue : currentSnap);
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
@@ -50,14 +55,15 @@ export function ScenesScreen() {
           {scenes.map((s) => (
             <button
               key={s.id}
-              onClick={() => load(s.show, s.snapshot, s.label)}
+              onClick={() => load(s.show, s.snapshot, s.label, s.kind)}
               className={`flex h-28 flex-col items-start justify-end rounded-2xl p-4 text-left text-lg font-semibold transition active:scale-95 ${
-                isCurrent(s.show, s.snapshot) ? "ring-4 ring-white" : "ring-1 ring-white/10"
+                isCurrent(s.show, s.snapshot, s.kind) ? "ring-4 ring-white" : "ring-1 ring-white/10"
               }`}
               style={{ background: `linear-gradient(135deg, ${s.color ?? "#fc2747"}cc, ${s.color ?? "#fc2747"}44)` }}
             >
-              {isCurrent(s.show, s.snapshot) && <span className="mb-auto rounded-full bg-black/40 px-2 py-0.5 text-xs">● ativa</span>}
+              {isCurrent(s.show, s.snapshot, s.kind) && <span className="mb-auto rounded-full bg-black/40 px-2 py-0.5 text-xs">● ativa</span>}
               {s.label}
+              {s.kind === "cue" && <span className="text-xs font-normal opacity-70">cue</span>}
             </button>
           ))}
         </div>
@@ -80,15 +86,17 @@ function TechScenes({
   load,
 }: {
   shows: ShowsWithDetails;
-  isCurrent: (show: string, snap: string) => boolean;
-  load: (show: string, snap: string, label: string) => void;
+  isCurrent: (show: string, name: string, kind?: SceneKind) => boolean;
+  load: (show: string, name: string, label: string, kind?: SceneKind) => void;
 }) {
   const scenes = useConfig((s) => s.config.scenes);
   const ui = useMixer((s) => s.ui);
   const entries = useMemo(() => Object.entries(shows), [shows]);
 
-  function toggle(show: string, snapshot: string) {
-    const existing = scenes.find((s) => s.show === show && s.snapshot === snapshot);
+  const same = (s: SceneButton, show: string, name: string, kind: SceneKind) => s.show === show && s.snapshot === name && (s.kind ?? "snapshot") === kind;
+
+  function toggle(show: string, snapshot: string, kind: SceneKind) {
+    const existing = scenes.find((s) => same(s, show, snapshot, kind));
     if (existing) {
       updateConfig({ scenes: scenes.filter((s) => s !== existing) });
     } else {
@@ -97,6 +105,7 @@ function TechScenes({
         label: snapshot,
         show,
         snapshot,
+        ...(kind === "cue" ? { kind } : {}),
         color: STRIP_COLORS[scenes.length % STRIP_COLORS.length],
       };
       updateConfig({ scenes: [...scenes, btn] });
@@ -114,7 +123,7 @@ function TechScenes({
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="section-title">Todas as cenas da mesa (visual técnico)</h3>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="btn-ghost h-10 px-3 text-sm" onClick={() => ui?.shows.refreshShows()}>
             ↻ Atualizar lista
           </button>
@@ -128,30 +137,38 @@ function TechScenes({
       {entries.map(([show, d]) => (
         <div key={show} className="rounded-2xl border border-white/10 bg-neutral-950 p-3">
           <div className="mb-2 font-semibold">📁 {show}</div>
-          <div className="space-y-1.5">
-            {d.snapshots.length === 0 && <div className="text-sm text-neutral-500">Sem cenas (snapshots) neste show.</div>}
-            {d.snapshots.map((snap) => {
-              const on = scenes.some((s) => s.show === show && s.snapshot === snap);
-              return (
-                <div key={snap} className="flex items-center gap-2 rounded-xl bg-neutral-900 p-2">
-                  <span className="min-w-0 flex-1 truncate">
-                    {isCurrent(show, snap) && <span className="mr-1 text-brand-400">●</span>}
-                    {snap}
-                  </span>
-                  <button className={`h-10 rounded-lg px-3 text-sm ${on ? "btn-brand" : "btn-ghost"}`} onClick={() => toggle(show, snap)}>
-                    {on ? "★ Voluntários" : "☆ Voluntários"}
-                  </button>
-                  <button className="btn-ghost h-10 px-3 text-sm" onClick={() => load(show, snap, snap)}>
-                    Carregar
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          {sceneList("Snapshots (mesa inteira)", "Sem snapshots neste show.", show, d.snapshots, "snapshot")}
+          {d.cues.length > 0 && sceneList("Cues (só parte da mesa)", "", show, d.cues, "cue")}
         </div>
       ))}
     </section>
   );
+
+  function sceneList(title: string, empty: string, show: string, names: string[], kind: SceneKind) {
+    return (
+      <div key={kind} className="mb-2 space-y-1.5">
+        <div className="text-xs uppercase tracking-wide text-neutral-500">{title}</div>
+        {names.length === 0 && <div className="text-sm text-neutral-500">{empty}</div>}
+        {names.map((name) => {
+          const on = scenes.some((s) => same(s, show, name, kind));
+          return (
+            <div key={name} className="flex items-center gap-2 rounded-xl bg-neutral-900 p-2">
+              <span className="min-w-0 flex-1 truncate">
+                {isCurrent(show, name, kind) && <span className="mr-1 text-brand-400">●</span>}
+                {name}
+              </span>
+              <button className={`h-10 rounded-lg px-3 text-sm ${on ? "btn-brand" : "btn-ghost"}`} onClick={() => toggle(show, name, kind)}>
+                {on ? "★ Voluntários" : "☆ Voluntários"}
+              </button>
+              <button className="btn-ghost h-10 px-3 text-sm" onClick={() => load(show, name, name, kind)}>
+                Carregar
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 }
 
 /** Renomear os botões de cena que os voluntários veem. */

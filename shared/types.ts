@@ -41,7 +41,10 @@ export interface SceneButton {
   id: string;
   label: string;
   show: string;
+  /** Nome do snapshot (ou do cue, quando kind = "cue"). */
   snapshot: string;
+  /** Snapshot troca a mesa inteira; cue troca só parte dela. Sem valor = snapshot. */
+  kind?: "snapshot" | "cue";
   color?: string;
 }
 

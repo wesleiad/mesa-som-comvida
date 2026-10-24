@@ -8,9 +8,16 @@ const NAMES = [
   "Sax", "Mic Púlpito", "Mic Sem Fio", "Notebook L", "Notebook R", "Ambiente L", "Ambiente R",
 ];
 
+// Mesmos shows/snapshots/cues da Ui24 da igreja (lidos da mesa em 24/10/2026),
+// pra treinar com os nomes de verdade.
 const SHOWS: Record<string, string[]> = {
-  "Comunidade Vida": ["Culto Domingo", "Culto Quarta", "Só Pregação", "Ensaio"],
-  Eventos: ["Conferência", "Batismo"],
+  Default: [
+    "* Init *", "Bkp Jones", "Cantata Natal 25", "Eqp. Bruna", "Eqp. Denise", "Eqp. Djalma", "Eqp. Gerson",
+    "Eqp. Weslei", "Eqp.1 Adoles", "Hr. Eqp1", "Hr.Eqp. Brusque", "Hr.Eqp2", "Pascoa 2026",
+  ],
+};
+const CUES: Record<string, string[]> = {
+  Default: ["IGREJA DE DEUS 2023", "MOISES"],
 };
 
 const INPUTS = 24;
@@ -50,8 +57,8 @@ function initialState(): Map<string, string> {
     set(`a.${a}.mute`, 0);
     set(`a.${a}.name`, `AUX ${a + 1}`);
   }
-  set("var.currentShow", "Comunidade Vida");
-  set("var.currentSnapshot", "Culto Domingo");
+  set("var.currentShow", "Default");
+  set("var.currentSnapshot", "Eqp. Denise");
   set("mgmask", 0);
   return s;
 }
@@ -115,13 +122,19 @@ export class SimSocket {
         this.emit(`SNAPSHOTLIST^${parts[1]}^${(SHOWS[parts[1]] ?? []).join("^")}`);
         break;
       case "CUELIST":
-        this.emit(`CUELIST^${parts[1]}^`);
+        this.emit(`CUELIST^${parts[1]}^${(CUES[parts[1]] ?? []).join("^")}`);
         break;
       case "LOADSNAPSHOT":
         state!.set("var.currentShow", parts[1]);
         state!.set("var.currentSnapshot", parts[2]);
         this.emit(`SETS^var.currentShow^${parts[1]}`);
         this.emit(`SETS^var.currentSnapshot^${parts[2]}`);
+        break;
+      case "LOADCUE":
+        state!.set("var.currentShow", parts[1]);
+        state!.set("var.currentCue", parts[2]);
+        this.emit(`SETS^var.currentShow^${parts[1]}`);
+        this.emit(`SETS^var.currentCue^${parts[2]}`);
         break;
     }
   }
